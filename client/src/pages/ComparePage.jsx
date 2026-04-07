@@ -62,7 +62,7 @@ const ComparePage = () => {
         setShowDiff(false);
 
         try {
-            const res = await fetchWithAuth("http://localhost:3000/api/preview", {
+            const res = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/preview`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ dbUrl: uri })

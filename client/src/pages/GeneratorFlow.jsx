@@ -262,7 +262,7 @@ const GeneratorFlow = () => {
 
         console.log('[History] Sending payload:', { userId: storedId, dbName, authStrategy, tableCount: historyPayload.tables.length });
 
-        const histRes = await fetchWithAuth('http://localhost:3000/api/history', {
+        const histRes = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(historyPayload)

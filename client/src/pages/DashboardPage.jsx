@@ -35,7 +35,7 @@ const DashboardPage = () => {
         if (authLoading) return;
         if (!user) { setLoading(false); return; }
 
-        fetchWithAuth(`http://localhost:3000/api/history?userId=${user.id}`)
+        fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history?userId=${user.id}`)
             .then(r => r.json())
             .then(data => setGenerations(data.generations || []))
             .catch(() => { })
@@ -103,7 +103,7 @@ const DashboardPage = () => {
 
     const handleRedownload = async (entry) => {
         try {
-            const res = await fetchWithAuth('http://localhost:3000/api/generate', {
+            const res = await fetchWithAuth('${import.meta.env.VITE_API_BASE_URL}/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

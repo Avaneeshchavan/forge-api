@@ -28,7 +28,7 @@ const HistoryPage = () => {
 
         const pendingRaw = sessionStorage.getItem('forge_history_pending');
 
-        fetchWithAuth(`http://localhost:3000/api/history?userId=${uid}`)
+        fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history?userId=${user.id}`)
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
@@ -50,7 +50,7 @@ const HistoryPage = () => {
 
     const handleDelete = async (id) => {
         try {
-            const res = await fetchWithAuth(`http://localhost:3000/api/history/${id}`, { method: 'DELETE' });
+            const res = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error("Failed to delete");
             setHistory(history.filter(h => h.id !== id));
         } catch (err) {
@@ -66,7 +66,7 @@ const HistoryPage = () => {
                 authStrategy: entry.auth_strategy,
                 dbUrl: '' 
             };
-            const res = await fetchWithAuth(`http://localhost:3000/api/generate`, {
+            const res = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
