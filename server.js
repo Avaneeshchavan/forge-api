@@ -31,7 +31,12 @@ app.use((req, res) => {
   })
 })
 
-app.listen(PORT, () => {
-  console.log('ForgeAPI running on port ' + PORT);
-  console.log('Checking Supabase URL:', process.env.SUPABASE_URL); 
-});
+// Only listen locally. Vercel will handle the routing natively.
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// THIS IS THE MAGIC LINE VERCEL NEEDS:
+module.exports = app;
