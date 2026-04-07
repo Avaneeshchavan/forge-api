@@ -1,0 +1,10 @@
+node_modules
+.env
+.DS_Store
+
+# Ignore any generated ZIP files you might test locally
+*.zip
+
+# Ignore error logs if your server crashes
+npm-debug.log*
+*.log
