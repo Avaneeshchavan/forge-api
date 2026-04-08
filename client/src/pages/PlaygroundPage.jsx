@@ -44,7 +44,9 @@ const getDefaultBody = (path) => {
 };
 
 const PlaygroundPage = () => {
-    const [baseUrl, setBaseUrl] = useState(import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000');
+    // 🔥 THE NUCLEAR OPTION: Initializing the state directly with the hardcoded URL
+    const [baseUrl, setBaseUrl] = useState('https://forge-api-drab.vercel.app');
+    
     const [endpoints, setEndpoints] = useState([]);
     const [selectedEndpoint, setSelectedEndpoint] = useState(null);
     const [requestBody, setRequestBody] = useState('');
@@ -179,7 +181,7 @@ const PlaygroundPage = () => {
                     <label style={{ fontSize: '13px', fontWeight: '500', color: '#ffffff' }}>Base URL</label>
                     <input
                         type="text" value={baseUrl} onChange={e => setBaseUrl(e.target.value)}
-                        placeholder="${import.meta.env.VITE_API_BASE_URL}"
+                        placeholder="https://forge-api-drab.vercel.app"
                         style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '8px', color: '#ffffff', padding: '10px 14px', fontSize: '14px', boxSizing: 'border-box', outline: 'none', transition: 'border-color 150ms' }}
                         onFocus={e => e.currentTarget.style.borderColor = '#6366f1'} onBlur={e => e.currentTarget.style.borderColor = '#1e1e1e'}
                     />

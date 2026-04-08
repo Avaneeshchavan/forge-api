@@ -4,6 +4,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { fetchWithAuth } from '../lib/api';
 import { Lock, LogOut, Zap, Sparkles, LayoutTemplate, Download, Loader2 } from 'lucide-react';
 
+// 🔥 THE NUCLEAR OPTION
+const apiBaseUrl = 'https://forge-api-drab.vercel.app/api';
+
 const getGreeting = () => {
     const h = new Date().getHours();
     if (h < 12) return 'Good morning';
@@ -35,7 +38,8 @@ const DashboardPage = () => {
         if (authLoading) return;
         if (!user) { setLoading(false); return; }
 
-        fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history?userId=${user.id}`)
+        // 🔥 FIX 1: Hardcoded URL for fetching dashboard stats
+        fetchWithAuth(`${apiBaseUrl}/history?userId=${user.id}`)
             .then(r => r.json())
             .then(data => setGenerations(data.generations || []))
             .catch(() => { })
@@ -103,7 +107,8 @@ const DashboardPage = () => {
 
     const handleRedownload = async (entry) => {
         try {
-            const res = await fetchWithAuth('${import.meta.env.VITE_API_BASE_URL}/api/generate', {
+            // 🔥 FIX 2: Hardcoded URL for re-downloading from the dashboard
+            const res = await fetchWithAuth(`${apiBaseUrl}/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
