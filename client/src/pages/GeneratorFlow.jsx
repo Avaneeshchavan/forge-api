@@ -268,7 +268,7 @@ const GeneratorFlow = () => {
           endpointCount: selectedTables.length * 5
         };
 
-        const histRes = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history`, {
+        const histRes = await fetchWithAuth(`${apiBaseUrl}/history`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(historyPayload)
