@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Plus, Copy, CheckCircle2, XCircle, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { fetchWithAuth } from '../lib/api';
 
 const getMethodColor = (m) => {
     switch (m) {
@@ -35,7 +37,6 @@ const SyntaxCode = ({ code }) => {
 };
 
 const getDefaultBody = (path) => {
-    // Smart template based on path (e.g. /api/users)
     const tableName = path.split('/').pop() || 'item';
     if (tableName === 'users') {
         return JSON.stringify({ email: "", full_name: "" }, null, 2);
@@ -44,8 +45,10 @@ const getDefaultBody = (path) => {
 };
 
 const PlaygroundPage = () => {
-    // 🔥 THE NUCLEAR OPTION: Initializing the state directly with the hardcoded URL
-    const [baseUrl, setBaseUrl] = useState('https://forge-api-drab.vercel.app');
+    const { user } = useAuth();
+    
+    // Defaulting back to localhost because the user tests their DOWNLOADED api here!
+    const [baseUrl, setBaseUrl] = useState('http://localhost:3000');
     
     const [endpoints, setEndpoints] = useState([]);
     const [selectedEndpoint, setSelectedEndpoint] = useState(null);
@@ -63,33 +66,43 @@ const PlaygroundPage = () => {
     const [headersOpen, setHeadersOpen] = useState(false);
 
     useEffect(() => {
-        // One-time migration from old key to new key
-        const old = localStorage.getItem('instapi_history');
-        if (old) {
-            localStorage.setItem('forge_history', old);
-            localStorage.removeItem('instapi_history');
-        }
-
-        const stored = localStorage.getItem('forge_history');
-        if (stored) {
+        const fetchLatestGeneration = async () => {
             try {
-                const history = JSON.parse(stored).sort((a, b) => b.timestamp - a.timestamp);
-                if (history.length > 0) {
-                    const latest = history[0];
-                    setAuthStrategy(latest.authStrategy || 'None');
+                // Get the user ID to fetch their specific history
+                const uid = user?.id || localStorage.getItem('forge_user_id');
+                if (!uid) return;
+                
+                // Fetch from the live backend using Nuclear Option URL
+                const res = await fetchWithAuth(`https://forge-api-drab.vercel.app/api/history?userId=${uid}`);
+                const data = await res.json();
+                
+                // If they have generated an API, grab the most recent one!
+                if (data.generations && data.generations.length > 0) {
+                    const latest = data.generations[0]; 
+                    setAuthStrategy(latest.auth_strategy || 'None');
+                    
                     let loadedEndpoints = [];
-                    latest.tables.forEach(t => {
-                        loadedEndpoints.push({ method: 'GET', path: `/api/${t.tableName}`, desc: `Fetch all ${t.tableName}` });
-                        loadedEndpoints.push({ method: 'GET', path: `/api/${t.tableName}/1`, desc: `Fetch ${t.tableName} by ID` });
-                        loadedEndpoints.push({ method: 'POST', path: `/api/${t.tableName}`, desc: `Create a new ${t.tableName}` });
-                        loadedEndpoints.push({ method: 'PUT', path: `/api/${t.tableName}/1`, desc: `Update ${t.tableName}` });
-                        loadedEndpoints.push({ method: 'DELETE', path: `/api/${t.tableName}/1`, desc: `Delete ${t.tableName}` });
-                    });
+                    
+                    // Loop through the tables they generated and create the REST endpoints
+                    if (latest.tables && Array.isArray(latest.tables)) {
+                        latest.tables.forEach(t => {
+                            const tName = t.tableName;
+                            loadedEndpoints.push({ method: 'GET', path: `/api/${tName}`, desc: `Fetch all ${tName}` });
+                            loadedEndpoints.push({ method: 'GET', path: `/api/${tName}/1`, desc: `Fetch ${tName} by ID` });
+                            loadedEndpoints.push({ method: 'POST', path: `/api/${tName}`, desc: `Create a new ${tName}` });
+                            loadedEndpoints.push({ method: 'PUT', path: `/api/${tName}/1`, desc: `Update ${tName}` });
+                            loadedEndpoints.push({ method: 'DELETE', path: `/api/${tName}/1`, desc: `Delete ${tName}` });
+                        });
+                    }
                     setEndpoints(loadedEndpoints);
                 }
-            } catch (e) { }
-        }
-    }, []);
+            } catch (e) {
+                console.error("Failed to load playground endpoints:", e);
+            }
+        };
+
+        fetchLatestGeneration();
+    }, [user]);
 
     const handleAddEndpoint = (e) => {
         e.preventDefault();
@@ -181,7 +194,7 @@ const PlaygroundPage = () => {
                     <label style={{ fontSize: '13px', fontWeight: '500', color: '#ffffff' }}>Base URL</label>
                     <input
                         type="text" value={baseUrl} onChange={e => setBaseUrl(e.target.value)}
-                        placeholder="https://forge-api-drab.vercel.app"
+                        placeholder="http://localhost:3000"
                         style={{ width: '100%', backgroundColor: '#0a0a0a', border: '1px solid #1e1e1e', borderRadius: '8px', color: '#ffffff', padding: '10px 14px', fontSize: '14px', boxSizing: 'border-box', outline: 'none', transition: 'border-color 150ms' }}
                         onFocus={e => e.currentTarget.style.borderColor = '#6366f1'} onBlur={e => e.currentTarget.style.borderColor = '#1e1e1e'}
                     />
