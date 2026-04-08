@@ -6,6 +6,9 @@ import { fetchWithAuth } from '../lib/api';
 import EndpointDocs from '../components/EndpointDocs';
 import Toast from '../components/Toast';
 
+// 🔥 THE NUCLEAR OPTION: Hardcoded to bypass Vercel env variable bugs
+const apiBaseUrl = 'https://forge-api-drab.vercel.app/api';
+
 const HistoryPage = () => {
     const [history, setHistory] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -28,7 +31,8 @@ const HistoryPage = () => {
 
         const pendingRaw = sessionStorage.getItem('forge_history_pending');
 
-        fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history?userId=${user.id}`)
+        // 🔥 FIX 1: Fetching history uses hardcoded URL
+        fetchWithAuth(`${apiBaseUrl}/history?userId=${user?.id || uid}`)
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
@@ -50,7 +54,8 @@ const HistoryPage = () => {
 
     const handleDelete = async (id) => {
         try {
-            const res = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history/${id}`, { method: 'DELETE' });
+            // 🔥 FIX 2: Deleting history uses hardcoded URL
+            const res = await fetchWithAuth(`${apiBaseUrl}/history/${id}`, { method: 'DELETE' });
             if (!res.ok) throw new Error("Failed to delete");
             setHistory(history.filter(h => h.id !== id));
         } catch (err) {
@@ -66,7 +71,8 @@ const HistoryPage = () => {
                 authStrategy: entry.auth_strategy,
                 dbUrl: '' 
             };
-            const res = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/generate`, {
+            // 🔥 FIX 3: Re-downloading uses hardcoded URL
+            const res = await fetchWithAuth(`${apiBaseUrl}/generate`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
