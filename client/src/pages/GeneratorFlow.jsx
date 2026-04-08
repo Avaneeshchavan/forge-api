@@ -6,7 +6,7 @@ import { fetchWithAuth } from '../lib/api';
 import SchemaStats from '../components/SchemaStats';
 import Toast from '../components/Toast';
 
-const apiBaseUrl = '/api';
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'http://localhost:3000/api';
 const borderColors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444'];
 
 const demoEcommerce = { "tables": [{ "name": "users", "columns": [{ "column_name": "id", "data_type": "integer", "is_nullable": "NO" }, { "column_name": "email", "data_type": "character varying", "is_nullable": "NO" }, { "column_name": "full_name", "data_type": "character varying", "is_nullable": "YES" }] }, { "name": "products", "columns": [{ "column_name": "id", "data_type": "integer", "is_nullable": "NO" }, { "column_name": "name", "data_type": "character varying", "is_nullable": "NO" }, { "column_name": "price", "data_type": "numeric", "is_nullable": "NO" }] }] };
