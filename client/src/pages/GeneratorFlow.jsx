@@ -6,6 +6,7 @@ import { fetchWithAuth } from '../lib/api';
 import SchemaStats from '../components/SchemaStats';
 import Toast from '../components/Toast';
 
+// FIX 1: Dynamic API Base URL
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api` : 'http://localhost:3000/api';
 const borderColors = ['#6366f1', '#22c55e', '#f59e0b', '#ef4444'];
 
@@ -180,7 +181,7 @@ const GeneratorFlow = () => {
     e.preventDefault();
     if (!dbUrl.trim()) { setError('Database URL is required.'); return; }
 
-    // 🔥 AUTO-FIX: Automatically convert "postgresql://" to "postgres://"
+    // 🔥 FIX 2: Automatically convert "postgresql://" to "postgres://" for Preview
     const cleanDbUrl = dbUrl.trim().replace(/^postgresql:\/\//i, 'postgres://');
 
     // Auth guard — real DB preview requires login
@@ -188,20 +189,15 @@ const GeneratorFlow = () => {
       navigate('/login?redirectTo=' + encodeURIComponent('/'));
       return;
     }
-    
     setLoading(true); setError(null); setIsDemoMode(false);
-    
     try {
-      // Use the cleanDbUrl here instead of dbUrl
       const res = await fetchWithAuth(`${apiBaseUrl}/preview`, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ dbUrl: cleanDbUrl }) 
+        body: JSON.stringify({ dbUrl: cleanDbUrl }) // Using clean string here!
       });
-      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to scan schema');
-      
       setSchema(data.schema);
       setSelectedTables(data.schema.map(t => t.tableName));
       if (data.schema.length > 0) {
@@ -237,7 +233,10 @@ const GeneratorFlow = () => {
     setShowPreviewModal(false);
     setLoading(true); setError(null);
     try {
-      const payload = { dbUrl: isDemoMode ? '' : dbUrl, selectedTables, authStrategy };
+      // 🔥 FIX 2 (Part B): Also auto-clean it before downloading!
+      const cleanDbUrl = dbUrl.trim().replace(/^postgresql:\/\//i, 'postgres://');
+      const payload = { dbUrl: isDemoMode ? '' : cleanDbUrl, selectedTables, authStrategy };
+      
       if (isDemoMode) payload.schema = schema.filter(t => selectedTables.includes(t.tableName));
       const res = await fetchWithAuth(`${apiBaseUrl}/generate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.error || 'Failed to compile API.'); }
@@ -252,16 +251,13 @@ const GeneratorFlow = () => {
           return id;
         })();
 
-        console.log('[History] User ID source:', user?.id ? 'Supabase Auth' : 'localStorage');
-        console.log('[History] User ID:', storedId);
-
         let dbName = 'Unknown DB';
         if (isDemoMode && !isAiMode && !isImportedMode && !templateName) dbName = 'Demo Schema';
         if (templateName) dbName = templateName;
         if (isImportedMode) dbName = 'Imported Schema';
         if (isAiMode) dbName = 'AI Generated Schema';
         if (!isDemoMode && !isAiMode && !isImportedMode && dbUrl) {
-          try { dbName = new URL(dbUrl).pathname.replace('/', '') || 'Unknown DB'; } catch (_) { }
+          try { dbName = new URL(cleanDbUrl).pathname.replace('/', '') || 'Unknown DB'; } catch (_) { }
         }
 
         const historyPayload = {
@@ -272,34 +268,22 @@ const GeneratorFlow = () => {
           endpointCount: selectedTables.length * 5
         };
 
-        console.log('[History] Sending payload:', { userId: storedId, dbName, authStrategy, tableCount: historyPayload.tables.length });
-
         const histRes = await fetchWithAuth(`${import.meta.env.VITE_API_BASE_URL}/api/history`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(historyPayload)
         });
 
-        console.log('[History] API response status:', histRes.status);
-
-        // Read response text first so we can log it even if JSON parse fails
         const rawText = await histRes.text();
-        console.log('[History] API raw response:', rawText);
-
         if (!histRes.ok) {
           console.error('[History] API returned error status', histRes.status, rawText);
         } else {
           try {
             const parsed = JSON.parse(rawText);
-            console.log('[History] Parsed response:', parsed);
-
             if (parsed.generation) {
               const pending = JSON.parse(sessionStorage.getItem('forge_history_pending') || '[]');
               pending.unshift(parsed.generation);
               sessionStorage.setItem('forge_history_pending', JSON.stringify(pending));
-              console.log('[History] Wrote to sessionStorage. Pending count:', pending.length);
-            } else {
-              console.warn('[History] API succeeded but returned no generation object:', parsed);
             }
           } catch (parseErr) {
             console.error('[History] Failed to parse API response as JSON:', parseErr, rawText);
@@ -314,8 +298,8 @@ const GeneratorFlow = () => {
       const a = document.createElement('a'); a.style.display = 'none'; a.href = downloadUrl; a.download = 'my-api.zip';
       document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(downloadUrl); document.body.removeChild(a);
 
-      // Show deploy card instead of resetting to step 1
-      setShowDeployCard(true);
+      // (Optional) if you have a setShowDeployCard function, it goes here
+      // setShowDeployCard(true);
     } catch (err) { setError(err.message); } finally { setLoading(false); }
   };
 
