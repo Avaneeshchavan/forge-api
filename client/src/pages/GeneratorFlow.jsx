@@ -180,16 +180,28 @@ const GeneratorFlow = () => {
     e.preventDefault();
     if (!dbUrl.trim()) { setError('Database URL is required.'); return; }
 
+    // 🔥 AUTO-FIX: Automatically convert "postgresql://" to "postgres://"
+    const cleanDbUrl = dbUrl.trim().replace(/^postgresql:\/\//i, 'postgres://');
+
     // Auth guard — real DB preview requires login
     if (!user) {
       navigate('/login?redirectTo=' + encodeURIComponent('/'));
       return;
     }
+    
     setLoading(true); setError(null); setIsDemoMode(false);
+    
     try {
-      const res = await fetchWithAuth(`${apiBaseUrl}/preview`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dbUrl }) });
+      // Use the cleanDbUrl here instead of dbUrl
+      const res = await fetchWithAuth(`${apiBaseUrl}/preview`, { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ dbUrl: cleanDbUrl }) 
+      });
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to scan schema');
+      
       setSchema(data.schema);
       setSelectedTables(data.schema.map(t => t.tableName));
       if (data.schema.length > 0) {
